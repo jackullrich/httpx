@@ -164,7 +164,8 @@ headers."User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/53
 [get.client.message]
 location = "query"
 name = "q"
-
+[[get.client.transforms]]
+action = "base64url"
 # SENDS:
 # GET /index?q=value
 # User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36
