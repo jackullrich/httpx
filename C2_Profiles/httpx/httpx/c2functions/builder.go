@@ -592,7 +592,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		Description:   "Agent configuration in JSON or TOML file",
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_FILE,
-		Required:      false,
+		Required:      true,
 	},
 	{
 		Name:          "callback_domains",
