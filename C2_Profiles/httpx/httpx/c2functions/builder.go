@@ -593,6 +593,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_FILE,
 		Required:      true,
+		UiPosition:    1,
 	},
 	{
 		Name:          "callback_domains",
@@ -600,6 +601,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  []string{"https://example.com:443"},
 		ParameterType: c2structs.C2_PARAMETER_TYPE_ARRAY,
 		Required:      true,
+		UiPosition:    2,
 	},
 	{
 		Name:          "domain_rotation",
@@ -610,27 +612,14 @@ var httpxc2parameters = []c2structs.C2Parameter{
 			"round-robin",
 			"random",
 		},
+		UiPosition: 3,
 	},
 	{
 		Name:          "failover_threshold",
 		Description:   "Domain fail-over threshold for how many times to keep trying one host before moving onto the next",
 		DefaultValue:  5,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
-	},
-	{
-		Name:          "encrypted_exchange_check",
-		Description:   "Perform Key Exchange",
-		DefaultValue:  true,
-		ParameterType: c2structs.C2_PARAMETER_TYPE_BOOLEAN,
-		Required:      false,
-	},
-	{
-		Name:          "callback_jitter",
-		Description:   "Callback Jitter in percent",
-		DefaultValue:  23,
-		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
-		Required:      false,
-		VerifierRegex: "^[0-9]+$",
+		UiPosition:    4,
 	},
 	{
 		Name:          "AESPSK",
@@ -643,6 +632,15 @@ var httpxc2parameters = []c2structs.C2Parameter{
 			"aes256_hmac",
 			"none",
 		},
+		UiPosition: 5,
+	},
+	{
+		Name:          "encrypted_exchange_check",
+		Description:   "Perform Key Exchange",
+		DefaultValue:  true,
+		ParameterType: c2structs.C2_PARAMETER_TYPE_BOOLEAN,
+		Required:      false,
+		UiPosition:    6,
 	},
 	{
 		Name:          "callback_interval",
@@ -651,6 +649,16 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
 		Required:      false,
 		VerifierRegex: "^[0-9]+$",
+		UiPosition:    7,
+	},
+	{
+		Name:          "callback_jitter",
+		Description:   "Callback Jitter in percent",
+		DefaultValue:  23,
+		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
+		Required:      false,
+		VerifierRegex: "^[0-9]+$",
+		UiPosition:    8,
 	},
 	{
 		Name:          "killdate",
@@ -658,6 +666,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  365,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_DATE,
 		Required:      false,
+		UiPosition:    9,
 	},
 	{
 		Name:          "proxy_host",
@@ -665,6 +674,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		Required:      false,
+		UiPosition:    10,
 	},
 	{
 		Name:          "proxy_user",
@@ -672,6 +682,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		Required:      false,
+		UiPosition:    11,
 	},
 	{
 		Name:          "proxy_pass",
@@ -679,6 +690,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		Required:      false,
+		UiPosition:    12,
 	},
 }
 
