@@ -588,20 +588,12 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 }
 var httpxc2parameters = []c2structs.C2Parameter{
 	{
-		Name:          "raw_c2_config",
-		Description:   "Agent configuration in JSON or TOML file",
-		DefaultValue:  "",
-		ParameterType: c2structs.C2_PARAMETER_TYPE_FILE,
-		Required:      true,
-		UiPosition:    1,
-	},
-	{
 		Name:          "callback_domains",
 		Description:   "Array of callback domains as http(s)://host:port (e.g. https://example.com:443)",
 		DefaultValue:  []string{"https://example.com:443"},
 		ParameterType: c2structs.C2_PARAMETER_TYPE_ARRAY,
 		Required:      true,
-		UiPosition:    2,
+		UiPosition:    1,
 	},
 	{
 		Name:          "domain_rotation",
@@ -612,14 +604,14 @@ var httpxc2parameters = []c2structs.C2Parameter{
 			"round-robin",
 			"random",
 		},
-		UiPosition: 3,
+		UiPosition: 2,
 	},
 	{
 		Name:          "failover_threshold",
 		Description:   "Domain fail-over threshold for how many times to keep trying one host before moving onto the next",
 		DefaultValue:  5,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
-		UiPosition:    4,
+		UiPosition:    3,
 	},
 	{
 		Name:          "AESPSK",
@@ -632,7 +624,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 			"aes256_hmac",
 			"none",
 		},
-		UiPosition: 5,
+		UiPosition: 4,
 	},
 	{
 		Name:          "encrypted_exchange_check",
@@ -640,7 +632,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  true,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_BOOLEAN,
 		Required:      false,
-		UiPosition:    6,
+		UiPosition:    5,
 	},
 	{
 		Name:          "callback_interval",
@@ -649,7 +641,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
 		Required:      false,
 		VerifierRegex: "^[0-9]+$",
-		UiPosition:    7,
+		UiPosition:    6,
 	},
 	{
 		Name:          "callback_jitter",
@@ -658,7 +650,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
 		Required:      false,
 		VerifierRegex: "^[0-9]+$",
-		UiPosition:    8,
+		UiPosition:    7,
 	},
 	{
 		Name:          "killdate",
@@ -666,7 +658,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  365,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_DATE,
 		Required:      false,
-		UiPosition:    9,
+		UiPosition:    8,
 	},
 	{
 		Name:          "proxy_host",
@@ -674,7 +666,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		Required:      false,
-		UiPosition:    10,
+		UiPosition:    9,
 	},
 	{
 		Name:          "proxy_user",
@@ -682,7 +674,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		Required:      false,
-		UiPosition:    11,
+		UiPosition:    10,
 	},
 	{
 		Name:          "proxy_pass",
@@ -690,6 +682,14 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		Required:      false,
+		UiPosition:    11,
+	},
+	{
+		Name:          "raw_c2_config",
+		Description:   "Agent configuration in JSON or TOML file",
+		DefaultValue:  "",
+		ParameterType: c2structs.C2_PARAMETER_TYPE_FILE,
+		Required:      true,
 		UiPosition:    12,
 	},
 }
