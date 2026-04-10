@@ -8,7 +8,7 @@ toolchain go1.23.3
 
 require (
 	github.com/Khan/genqlient v0.8.0
-	github.com/MythicMeta/MythicContainer v1.4.19
+	github.com/MythicMeta/MythicContainer v1.6.4
 	github.com/pelletier/go-toml v1.9.5
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 )
