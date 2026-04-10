@@ -596,7 +596,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "callback_domains",
-		Description:   "Array of callback domains to communicate with",
+		Description:   "Array of callback domains as http(s)://host:port (e.g. https://example.com:443)",
 		DefaultValue:  []string{"https://example.com:443"},
 		ParameterType: c2structs.C2_PARAMETER_TYPE_ARRAY,
 		Required:      true,
