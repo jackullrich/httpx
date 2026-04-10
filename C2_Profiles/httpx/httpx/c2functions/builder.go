@@ -257,7 +257,6 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 		response := c2structs.C2GetIOCMessageResponse{Success: true}
 		agentConfigFileID, err := message.GetFileArg("raw_c2_config")
 		if err != nil || agentConfigFileID == "" {
-			response.Message = "No agent config file supplied, skipping IOC generation."
 			return response
 		}
 		agentConfigContents, err := mythicrpc.SendMythicRPCFileGetContent(mythicrpc.MythicRPCFileGetContentMessage{
