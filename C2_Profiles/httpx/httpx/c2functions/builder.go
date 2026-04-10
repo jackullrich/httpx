@@ -120,9 +120,8 @@ var httpxc2definition = c2structs.C2Profile{
 		// this is where we will need to update the config with what the agent supplied
 		// this is called each time a new payload is created, so update the server's config with the agent's config
 		agentConfigFileID, err := message.GetFileArg("raw_c2_config")
-		if err != nil {
-			response.Success = false
-			response.Error += fmt.Sprintf("Error getting agent_config: %v\n", err)
+		if err != nil || agentConfigFileID == "" {
+			response.Message = "No agent config file supplied, skipping config check."
 			return response
 		}
 		err = validateAndUpdateConfig(agentConfigFileID)
@@ -141,9 +140,8 @@ var httpxc2definition = c2structs.C2Profile{
 			Message: fmt.Sprintf("Called redirector status check:\n%v", message),
 		}
 		agentConfigFileID, err := message.GetFileArg("raw_c2_config")
-		if err != nil {
-			response.Success = false
-			response.Error += fmt.Sprintf("Error getting agent_config: %v\n", err)
+		if err != nil || agentConfigFileID == "" {
+			response.Message = "No agent config file supplied, skipping redirector rules."
 			return response
 		}
 		agentConfigContents, err := mythicrpc.SendMythicRPCFileGetContent(mythicrpc.MythicRPCFileGetContentMessage{
@@ -258,9 +256,8 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 	GetIOCFunction: func(message c2structs.C2GetIOCMessage) c2structs.C2GetIOCMessageResponse {
 		response := c2structs.C2GetIOCMessageResponse{Success: true}
 		agentConfigFileID, err := message.GetFileArg("raw_c2_config")
-		if err != nil {
-			response.Success = false
-			response.Error += fmt.Sprintf("Error getting agent_config: %v\n", err)
+		if err != nil || agentConfigFileID == "" {
+			response.Message = "No agent config file supplied, skipping IOC generation."
 			return response
 		}
 		agentConfigContents, err := mythicrpc.SendMythicRPCFileGetContent(mythicrpc.MythicRPCFileGetContentMessage{
@@ -333,9 +330,8 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 	SampleMessageFunction: func(message c2structs.C2SampleMessageMessage) c2structs.C2SampleMessageResponse {
 		response := c2structs.C2SampleMessageResponse{Success: true, Message: "\n"}
 		agentConfigFileID, err := message.GetFileArg("raw_c2_config")
-		if err != nil {
-			response.Success = false
-			response.Error += fmt.Sprintf("Error getting agent_config: %v\n", err)
+		if err != nil || agentConfigFileID == "" {
+			response.Message = "No agent config file supplied, skipping sample message."
 			return response
 		}
 		agentConfigContents, err := mythicrpc.SendMythicRPCFileGetContent(mythicrpc.MythicRPCFileGetContentMessage{
@@ -689,7 +685,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		Description:   "Agent configuration in JSON or TOML file",
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_FILE,
-		Required:      true,
+		Required:      false,
 		UiPosition:    12,
 	},
 }
