@@ -659,6 +659,35 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		ParameterType: c2structs.C2_PARAMETER_TYPE_DATE,
 		Required:      false,
 	},
+	{
+		Name:          "proxy_host",
+		Description:   "Proxy host in format host:port",
+		DefaultValue:  "",
+		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
+		Required:      false,
+	},
+	{
+		Name:          "proxy_port",
+		Description:   "Proxy port",
+		DefaultValue:  "",
+		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
+		Required:      false,
+		VerifierRegex: "^[0-9]*$",
+	},
+	{
+		Name:          "proxy_user",
+		Description:   "Proxy username",
+		DefaultValue:  "",
+		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
+		Required:      false,
+	},
+	{
+		Name:          "proxy_pass",
+		Description:   "Proxy password",
+		DefaultValue:  "",
+		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
+		Required:      false,
+	},
 }
 
 func validateAndUpdateConfig(agentConfigFileID string) error {
