@@ -1,8 +1,6 @@
 module MyContainer
 
-go 1.23.0
-
-toolchain go1.23.3
+go 1.25.1
 
 //replace github.com/MythicMeta/MythicContainer => ../../../../MythicMeta/MythicContainer
 
