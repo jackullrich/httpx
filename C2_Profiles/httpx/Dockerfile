@@ -4,6 +4,8 @@ WORKDIR /Mythic/
 
 COPY [".", "."]
 
+RUN go mod tidy && cd httpx/c2_code && go mod tidy && cd /Mythic/
+
 RUN make build
 
 FROM alpine
