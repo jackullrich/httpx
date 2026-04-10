@@ -667,14 +667,6 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		Required:      false,
 	},
 	{
-		Name:          "proxy_port",
-		Description:   "Proxy port",
-		DefaultValue:  "",
-		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
-		Required:      false,
-		VerifierRegex: "^[0-9]*$",
-	},
-	{
 		Name:          "proxy_user",
 		Description:   "Proxy username",
 		DefaultValue:  "",
