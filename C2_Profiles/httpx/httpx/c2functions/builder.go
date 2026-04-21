@@ -673,6 +673,7 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 var httpxc2parameters = []c2structs.C2Parameter{
 	{
 		Name:          "callback_domains",
+		DisplayName:   "Callback Domains",
 		Description:   "Array of callback domains as http(s)://host:port (e.g. https://example.com:443)",
 		DefaultValue:  []string{"https://example.com:443"},
 		ParameterType: c2structs.C2_PARAMETER_TYPE_ARRAY,
@@ -681,6 +682,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "domain_rotation",
+		DisplayName:   "Domain Rotation",
 		Description:   "Domain rotation pattern. Fail-over uses each one in order until it can't communicate with it successfully and moves on. Round-robin makes each request to the next host in the list.",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_CHOOSE_ONE,
 		Choices: []string{
@@ -692,6 +694,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "failover_threshold",
+		DisplayName:   "Failover Threshold",
 		Description:   "Domain fail-over threshold for how many times to keep trying one host before moving onto the next",
 		DefaultValue:  5,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
@@ -699,6 +702,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "AESPSK",
+		DisplayName:   "AES PSK",
 		Description:   "Encryption Type",
 		DefaultValue:  "aes256_hmac",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_CHOOSE_ONE,
@@ -712,6 +716,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "encrypted_exchange_check",
+		DisplayName:   "Encrypted Key Exchange",
 		Description:   "Perform Key Exchange",
 		DefaultValue:  true,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_BOOLEAN,
@@ -720,6 +725,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "callback_interval",
+		DisplayName:   "Callback Interval",
 		Description:   "Callback Interval in seconds",
 		DefaultValue:  10,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
@@ -729,6 +735,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "callback_jitter",
+		DisplayName:   "Callback Jitter",
 		Description:   "Callback Jitter in percent",
 		DefaultValue:  23,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_NUMBER,
@@ -738,6 +745,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "killdate",
+		DisplayName:   "Kill Date",
 		Description:   "Date when the agent should stop executing",
 		DefaultValue:  365,
 		ParameterType: c2structs.C2_PARAMETER_TYPE_DATE,
@@ -746,6 +754,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "proxy_host",
+		DisplayName:   "Proxy Host",
 		Description:   "Proxy host in format host:port",
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
@@ -754,6 +763,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "proxy_user",
+		DisplayName:   "Proxy User",
 		Description:   "Proxy username",
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
@@ -762,6 +772,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "proxy_pass",
+		DisplayName:   "Proxy Password",
 		Description:   "Proxy password",
 		DefaultValue:  "",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
@@ -770,6 +781,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 	},
 	{
 		Name:          "raw_c2_config",
+		DisplayName:   "Raw C2 Config",
 		Description:   "Inline agent configuration in JSON or TOML. Leave empty to use the default no-transform profile.",
 		DefaultValue:  "",
 		FormatString:  "ui:config_editor:json_toml:random_fn=generate_random_raw_c2_config",
