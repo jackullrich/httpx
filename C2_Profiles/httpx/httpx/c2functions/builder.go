@@ -10,7 +10,6 @@ import (
 	"fmt"
 	c2structs "github.com/MythicMeta/MythicContainer/c2_structs"
 	"github.com/MythicMeta/MythicContainer/logging"
-	"github.com/MythicMeta/MythicContainer/mythicrpc"
 	"github.com/MythicMeta/MythicContainer/utils/sharedStructs"
 	"github.com/pelletier/go-toml"
 	"golang.org/x/exp/slices"
@@ -508,7 +507,7 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 			serverResp.Header.Set(key, val)
 		}
 		serverResp.Body.Close()
-		agentMessage, err = transformMessageFromServer([]byte(samplePostMessage), agentVariation.Post)
+		agentMessage, err := transformMessageFromServer([]byte(samplePostMessage), agentVariation.Post)
 		if err != nil {
 			logging.LogError(err, "failed to create transformed response for agent")
 			response.Success = false
@@ -517,7 +516,7 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 		}
 		serverResp.Body = io.NopCloser(bytes.NewBuffer(agentMessage))
 		serverResp.ContentLength = int64(len(agentMessage))
-		dump, err = httputil.DumpResponse(serverResp, true)
+		dump, err := httputil.DumpResponse(serverResp, true)
 		response.Message += "POST Variation Server Response:\n" + fmt.Sprintf("%s\n\n", dump)
 		return response
 	},
