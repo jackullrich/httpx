@@ -759,14 +759,6 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 			response.Result["value"] = generated
 			return response
 		},
-		"get_raw_c2_config_schema": func(message c2structs.C2RPCOtherServiceRPCMessage) c2structs.C2RPCOtherServiceRPCMessageResponse {
-			return c2structs.C2RPCOtherServiceRPCMessageResponse{
-				Success: true,
-				Result: map[string]interface{}{
-					"schema": rawC2ConfigSchema(),
-				},
-			}
-		},
 	},
 }
 var httpxc2parameters = []c2structs.C2Parameter{
@@ -904,8 +896,9 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		GroupName:     "Advanced",
 		Description:   "Inline agent configuration in JSON or TOML. Leave empty to use the default no-transform profile.",
 		DefaultValue:  "",
-		FormatString:  "ui:config_editor:json_toml:random_fn=generate_random_raw_c2_config:form_fn=get_raw_c2_config_schema",
+		FormatString:  "ui:config_editor:json_toml:random_fn=generate_random_raw_c2_config",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
+		FormSchema:    rawC2ConfigSchema(),
 		Required:      false,
 		UiPosition:    12,
 	},
