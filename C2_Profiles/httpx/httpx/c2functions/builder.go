@@ -163,7 +163,20 @@ func rawC2ConfigSchema() map[string]interface{} {
 		"label": "Message Placement",
 		"fields": []interface{}{
 			map[string]interface{}{"name": "location", "type": "enum", "choices": locations, "label": "Location"},
-			map[string]interface{}{"name": "name", "type": "string", "label": "Parameter Name", "description": "Used when location is cookie, query, or header"},
+			map[string]interface{}{
+				"name":      "name",
+				"type":      "string",
+				"label":     "Parameter Name",
+				"show_when": map[string]interface{}{"field": "location", "in": []string{"cookie", "query", "header"}},
+				"placeholder_when": map[string]interface{}{
+					"field": "location",
+					"map": map[string]interface{}{
+						"cookie": "cookie name",
+						"query":  "query parameter name",
+						"header": "header name",
+					},
+				},
+			},
 		},
 	}
 
