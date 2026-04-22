@@ -126,6 +126,65 @@ func parseInlineAgentVariation(agentConfig string) (AgentVariations, error) {
 	return parseAgentVariation([]byte(normalizedConfig), fmt.Sprintf("inline_%x", nameHash[:6]))
 }
 
+func rawC2ConfigSchema() map[string]interface{} {
+	locations := []string{"body", "cookie", "query", "header"}
+	transformActions := []string{"base64", "base64url", "netbios", "netbiosu", "xor", "prepend", "append"}
+
+	transformItem := map[string]interface{}{
+		"type": "object",
+		"fields": []interface{}{
+			map[string]interface{}{"name": "action", "type": "enum", "choices": transformActions, "label": "Action"},
+			map[string]interface{}{"name": "value", "type": "string", "label": "Value"},
+		},
+	}
+
+	messageField := map[string]interface{}{
+		"name":  "message",
+		"type":  "object",
+		"label": "Message Placement",
+		"fields": []interface{}{
+			map[string]interface{}{"name": "location", "type": "enum", "choices": locations, "label": "Location"},
+			map[string]interface{}{"name": "name", "type": "string", "label": "Parameter Name", "description": "Used when location is cookie, query, or header"},
+		},
+	}
+
+	clientFields := []interface{}{
+		messageField,
+		map[string]interface{}{"name": "headers", "type": "string_map", "label": "HTTP Headers", "keyLabel": "Header", "valueLabel": "Value"},
+		map[string]interface{}{"name": "parameters", "type": "string_map", "label": "Query Parameters", "keyLabel": "Name", "valueLabel": "Value"},
+		map[string]interface{}{"name": "transforms", "type": "array", "label": "Transforms", "items": transformItem},
+	}
+
+	serverFields := []interface{}{
+		map[string]interface{}{"name": "headers", "type": "string_map", "label": "HTTP Headers", "keyLabel": "Header", "valueLabel": "Value"},
+		map[string]interface{}{"name": "transforms", "type": "array", "label": "Transforms", "items": transformItem},
+	}
+
+	buildRequestBlock := func(fieldName, label string, verbChoices []string) map[string]interface{} {
+		return map[string]interface{}{
+			"name":  fieldName,
+			"type":  "object",
+			"label": label,
+			"fields": []interface{}{
+				map[string]interface{}{"name": "verb", "type": "enum", "choices": verbChoices, "label": "HTTP Verb"},
+				map[string]interface{}{"name": "uris", "type": "array", "label": "URI Paths", "items": map[string]interface{}{"type": "string"}},
+				map[string]interface{}{"name": "client", "type": "object", "label": "Client → Server", "fields": clientFields},
+				map[string]interface{}{"name": "server", "type": "object", "label": "Server → Client", "fields": serverFields},
+			},
+		}
+	}
+
+	return map[string]interface{}{
+		"type":  "object",
+		"label": "Agent Variation",
+		"fields": []interface{}{
+			map[string]interface{}{"name": "name", "type": "string", "label": "Name"},
+			buildRequestBlock("get", "GET Request", []string{"GET"}),
+			buildRequestBlock("post", "POST Request", []string{"POST", "PUT", "PATCH"}),
+		},
+	}
+}
+
 func randomRawC2Config() (string, error) {
 	verbs := []string{"POST", "PUT", "PATCH"}
 	postPaths := []string{"/api/v1/events", "/submit", "/upload", "/graphql", "/sync", "/beacon", "/telemetry"}
@@ -668,6 +727,14 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 			response.Result["value"] = generated
 			return response
 		},
+		"get_raw_c2_config_schema": func(message c2structs.C2RPCOtherServiceRPCMessage) c2structs.C2RPCOtherServiceRPCMessageResponse {
+			return c2structs.C2RPCOtherServiceRPCMessageResponse{
+				Success: true,
+				Result: map[string]interface{}{
+					"schema": rawC2ConfigSchema(),
+				},
+			}
+		},
 	},
 }
 var httpxc2parameters = []c2structs.C2Parameter{
@@ -805,7 +872,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		GroupName:     "Advanced",
 		Description:   "Inline agent configuration in JSON or TOML. Leave empty to use the default no-transform profile.",
 		DefaultValue:  "",
-		FormatString:  "ui:config_editor:json_toml:random_fn=generate_random_raw_c2_config",
+		FormatString:  "ui:config_editor:json_toml:random_fn=generate_random_raw_c2_config:form_fn=get_raw_c2_config_schema",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		Required:      false,
 		UiPosition:    12,
