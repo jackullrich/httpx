@@ -4,7 +4,7 @@ go 1.25.1
 
 //replace github.com/MythicMeta/MythicContainer => ../../../../MythicMeta/MythicContainer
 
-replace github.com/MythicMeta/MythicContainer => github.com/jackullrich/MythicContainer v0.0.0-20260422004610-71b1a7d49e97
+replace github.com/MythicMeta/MythicContainer => github.com/jackullrich/MythicContainer v0.0.0-20260422013121-dcd81ea3e9cd
 
 require (
 	github.com/Khan/genqlient v0.8.0

@@ -692,6 +692,11 @@ var httpxc2parameters = []c2structs.C2Parameter{
 			"round-robin",
 			"random",
 		},
+		ChoicesDisplayNames: map[string]string{
+			"fail-over":   "Fail-over",
+			"round-robin": "Round-robin",
+			"random":      "Random",
+		},
 		UiPosition: 2,
 	},
 	{
@@ -747,6 +752,10 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		Choices: []string{
 			"aes256_hmac",
 			"none",
+		},
+		ChoicesDisplayNames: map[string]string{
+			"aes256_hmac": "AES-256 HMAC",
+			"none":        "None",
 		},
 		UiPosition: 4,
 	},
