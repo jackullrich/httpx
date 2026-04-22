@@ -130,31 +130,29 @@ func rawC2ConfigSchema() map[string]interface{} {
 	locations := []string{"body", "cookie", "query", "header"}
 	transformActions := []string{"base64", "base64url", "netbios", "netbiosu", "xor", "prepend", "append"}
 	transformActionsWithArg := []string{"xor", "prepend", "append"}
-	transformActionLabels := map[string]string{
-		"base64":    "base64 (no arg)",
-		"base64url": "base64url (no arg)",
-		"netbios":   "netbios (no arg)",
-		"netbiosu":  "netbiosu (no arg)",
-		"xor":       "xor (key)",
-		"prepend":   "prepend (text)",
-		"append":    "append (text)",
-	}
 
 	transformItem := map[string]interface{}{
 		"type": "object",
 		"fields": []interface{}{
 			map[string]interface{}{
-				"name":         "action",
-				"type":         "enum",
-				"choices":      transformActions,
-				"choiceLabels": transformActionLabels,
-				"label":        "Action",
+				"name":    "action",
+				"type":    "enum",
+				"choices": transformActions,
+				"label":   "Action",
 			},
 			map[string]interface{}{
 				"name":      "value",
 				"type":      "string",
 				"label":     "Argument",
 				"show_when": map[string]interface{}{"field": "action", "in": transformActionsWithArg},
+				"placeholder_when": map[string]interface{}{
+					"field": "action",
+					"map": map[string]interface{}{
+						"xor":     "key",
+						"prepend": "text to prepend",
+						"append":  "text to append",
+					},
+				},
 			},
 		},
 	}
