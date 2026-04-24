@@ -134,48 +134,92 @@ func InitializeGinLogger(configInstance instanceConfig) gin.HandlerFunc {
 func setRoutes(r *gin.Engine, configInstance instanceConfig) {
 	// define generic get/post routes
 
-	for _, variation := range AgentConfigs {
-		getProxy := &httputil.ReverseProxy{
+	// Track (method, path) pairs that have been claimed by registered
+	// variations so we can (a) tolerate duplicate URIs across variations
+	// without Gin panicking and (b) know whether a custom variation has
+	// already claimed the "POST /" default fallback slot.
+	registered := map[string]bool{}
+	claim := func(method, path string) bool {
+		key := method + " " + path
+		if registered[key] {
+			return false
+		}
+		registered[key] = true
+		return true
+	}
+
+	newProxy := func() *httputil.ReverseProxy {
+		return &httputil.ReverseProxy{
 			Transport: &http.Transport{
 				DialContext: (&net.Dialer{
 					Timeout: 30 * time.Second,
 				}).DialContext,
 				MaxIdleConns:    10,
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}}
+			},
+		}
+	}
+
+	for _, variation := range AgentConfigs {
+		getProxy := newProxy()
 		for _, uri := range variation.Get.URIs {
+			method := "POST"
+			if variation.Get.Verb == "GET" {
+				method = "GET"
+			}
+			if !claim(method, uri) {
+				logging.LogInfo("Skipping duplicate route", "method", method, "uri", uri, "variation", variation.Name)
+				continue
+			}
 			logging.LogInfo("Setting Agent Config GET",
 				"verb", variation.Get.Verb,
 				"uri", uri,
 				"location", variation.Get.Client.Message.Location,
 				"name", variation.Get.Client.Message.Name)
-			if variation.Get.Verb == "GET" {
+			if method == "GET" {
 				r.GET(uri, proxyRequest(configInstance, getProxy, variation.Get))
 			} else {
 				r.POST(uri, proxyRequest(configInstance, getProxy, variation.Get))
 			}
 		}
-		postProxy := &httputil.ReverseProxy{
-			Transport: &http.Transport{
-				DialContext: (&net.Dialer{
-					Timeout: 30 * time.Second,
-				}).DialContext,
-				MaxIdleConns:    10,
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}}
+		postProxy := newProxy()
 		for _, uri := range variation.Post.URIs {
+			method := "POST"
+			if variation.Post.Verb == "GET" {
+				method = "GET"
+			}
+			if !claim(method, uri) {
+				logging.LogInfo("Skipping duplicate route", "method", method, "uri", uri, "variation", variation.Name)
+				continue
+			}
 			logging.LogInfo("Setting Agent Config POST",
 				"verb", variation.Post.Verb,
 				"uri", uri,
 				"location", variation.Post.Client.Message.Location,
 				"name", variation.Post.Client.Message.Location)
-			if variation.Post.Verb == "GET" {
+			if method == "GET" {
 				r.GET(uri, proxyRequest(configInstance, postProxy, variation.Post))
 			} else {
 				r.POST(uri, proxyRequest(configInstance, postProxy, variation.Post))
 			}
 		}
 
+	}
+
+	// Always-on fallback for agents built with an empty raw_c2_config
+	// (or built before their variation made it into agent_configs.json):
+	// accept POST / with the message in the body and no transforms.
+	// Only register if a custom variation hasn't already claimed POST /.
+	if claim("POST", "/") {
+		defaultVariation := AgentVariationConfig{
+			Verb: "POST",
+			URIs: []string{"/"},
+			Client: AgentVariationConfigClient{
+				Message: AgentVariationConfigMessage{Location: "body"},
+			},
+		}
+		logging.LogInfo("Registering default fallback route", "method", "POST", "uri", "/", "location", "body")
+		r.POST("/", proxyRequest(configInstance, newProxy(), defaultVariation))
 	}
 	if len(configInstance.PayloadHostPaths) > 0 {
 		for path, value := range configInstance.PayloadHostPaths {
