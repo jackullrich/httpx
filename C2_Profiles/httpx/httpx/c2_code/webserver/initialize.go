@@ -396,6 +396,8 @@ func proxyRequest(configInstance instanceConfig, proxy *httputil.ReverseProxy, v
 		}
 		req.Body = io.NopCloser(bytes.NewBuffer(agentMessage))
 		req.ContentLength = int64(len(agentMessage))
+		req.Header.Set("Content-Length", strconv.Itoa(len(agentMessage)))
+		req.TransferEncoding = nil
 	}
 	createResponseFunc := func(resp *http.Response) error {
 		for key, val := range variation.Server.Headers {
