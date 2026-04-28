@@ -26,6 +26,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var mythicClient = &http.Client{Timeout: 30 * time.Second}
+
 func Initialize(configInstance instanceConfig) *gin.Engine {
 	if mythicConfig.MythicConfig.DebugLevel == "warning" {
 		gin.SetMode(gin.ReleaseMode)
@@ -148,20 +150,7 @@ func setRoutes(r *gin.Engine, configInstance instanceConfig) {
 		return true
 	}
 
-	newProxy := func() *httputil.ReverseProxy {
-		return &httputil.ReverseProxy{
-			Transport: &http.Transport{
-				DialContext: (&net.Dialer{
-					Timeout: 30 * time.Second,
-				}).DialContext,
-				MaxIdleConns:    10,
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			},
-		}
-	}
-
 	for _, variation := range AgentConfigs {
-		getProxy := newProxy()
 		for _, uri := range variation.Get.URIs {
 			method := "POST"
 			if variation.Get.Verb == "GET" {
@@ -177,12 +166,11 @@ func setRoutes(r *gin.Engine, configInstance instanceConfig) {
 				"location", variation.Get.Client.Message.Location,
 				"name", variation.Get.Client.Message.Name)
 			if method == "GET" {
-				r.GET(uri, proxyRequest(configInstance, getProxy, variation.Get))
+				r.GET(uri, proxyRequest(configInstance, variation.Get))
 			} else {
-				r.POST(uri, proxyRequest(configInstance, getProxy, variation.Get))
+				r.POST(uri, proxyRequest(configInstance, variation.Get))
 			}
 		}
-		postProxy := newProxy()
 		for _, uri := range variation.Post.URIs {
 			method := "POST"
 			if variation.Post.Verb == "GET" {
@@ -198,9 +186,9 @@ func setRoutes(r *gin.Engine, configInstance instanceConfig) {
 				"location", variation.Post.Client.Message.Location,
 				"name", variation.Post.Client.Message.Location)
 			if method == "GET" {
-				r.GET(uri, proxyRequest(configInstance, postProxy, variation.Post))
+				r.GET(uri, proxyRequest(configInstance, variation.Post))
 			} else {
-				r.POST(uri, proxyRequest(configInstance, postProxy, variation.Post))
+				r.POST(uri, proxyRequest(configInstance, variation.Post))
 			}
 		}
 
@@ -219,7 +207,7 @@ func setRoutes(r *gin.Engine, configInstance instanceConfig) {
 			},
 		}
 		logging.LogInfo("Registering default fallback route", "method", "POST", "uri", "/", "location", "body")
-		r.POST("/", proxyRequest(configInstance, newProxy(), defaultVariation))
+		r.POST("/", proxyRequest(configInstance, defaultVariation))
 	}
 	if len(configInstance.PayloadHostPaths) > 0 {
 		for path, value := range configInstance.PayloadHostPaths {
@@ -378,40 +366,10 @@ func getMessageFromClient(req *http.Request, variation AgentVariationConfig) ([]
 		return nil, errors.New("body is empty but message indicated in body")
 	}
 }
-func proxyRequest(configInstance instanceConfig, proxy *httputil.ReverseProxy, variation AgentVariationConfig) gin.HandlerFunc {
+func proxyRequest(configInstance instanceConfig, variation AgentVariationConfig) gin.HandlerFunc {
 	if configInstance.Debug {
 		logging.LogInfo("debug route", "host", mythicConfig.MythicConfig.MythicServerHost, "path", "/agent_message")
 	}
-	director := func(req *http.Request) {
-		req.URL.Scheme = "http"
-		req.Method = "POST"
-		req.URL.Host = fmt.Sprintf("%s:%d", mythicConfig.MythicConfig.MythicServerHost, mythicConfig.MythicConfig.MythicServerPort)
-		req.Host = fmt.Sprintf("%s:%d", mythicConfig.MythicConfig.MythicServerHost, mythicConfig.MythicConfig.MythicServerPort)
-		req.URL.Path = "/agent_message"
-		req.Header.Add("mythic", "httpx")
-	}
-	createResponseFunc := func(resp *http.Response) error {
-		for key, val := range variation.Server.Headers {
-			resp.Header.Set(key, val)
-		}
-		originalMessage, err := io.ReadAll(resp.Body)
-		if err != nil {
-			logging.LogError(err, "failed to get message body from mythic's response")
-			return err
-		}
-		resp.Body.Close()
-		agentMessage, err := transformMessageFromServer(originalMessage, variation)
-		if err != nil {
-			logging.LogError(err, "failed to create transformed response for agent")
-			return err
-		}
-		resp.Body = io.NopCloser(bytes.NewBuffer(agentMessage))
-		resp.ContentLength = int64(len(agentMessage))
-		resp.Header.Set("Content-Length", strconv.Itoa(len(agentMessage)))
-		return nil
-	}
-	proxy.ModifyResponse = createResponseFunc
-	proxy.Director = director
 	return func(c *gin.Context) {
 		agentMessage, err := getMessageFromClient(c.Request, variation)
 		if err != nil {
@@ -419,11 +377,43 @@ func proxyRequest(configInstance instanceConfig, proxy *httputil.ReverseProxy, v
 			c.AbortWithStatus(http.StatusBadGateway)
 			return
 		}
-		c.Request.Body = io.NopCloser(bytes.NewReader(agentMessage))
-		c.Request.ContentLength = int64(len(agentMessage))
-		c.Request.Header.Set("Content-Length", strconv.Itoa(len(agentMessage)))
-		c.Request.TransferEncoding = nil
-		proxy.ServeHTTP(c.Writer, c.Request)
+		upstreamURL := fmt.Sprintf("http://%s:%d/agent_message", mythicConfig.MythicConfig.MythicServerHost, mythicConfig.MythicConfig.MythicServerPort)
+		upstreamReq, err := http.NewRequest(http.MethodPost, upstreamURL, bytes.NewReader(agentMessage))
+		if err != nil {
+			logging.LogError(err, "Failed to create upstream mythic request")
+			c.AbortWithStatus(http.StatusBadGateway)
+			return
+		}
+		upstreamReq.Header.Set("mythic", "httpx")
+		upstreamReq.Header.Set("Content-Length", strconv.Itoa(len(agentMessage)))
+		upstreamReq.ContentLength = int64(len(agentMessage))
+		upstreamReq.TransferEncoding = nil
+
+		resp, err := mythicClient.Do(upstreamReq)
+		if err != nil {
+			logging.LogError(err, "Failed to send decoded agent message to mythic")
+			c.AbortWithStatus(http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		originalMessage, err := io.ReadAll(resp.Body)
+		if err != nil {
+			logging.LogError(err, "failed to get message body from mythic's response")
+			c.AbortWithStatus(http.StatusBadGateway)
+			return
+		}
+		agentResponse, err := transformMessageFromServer(originalMessage, variation)
+		if err != nil {
+			logging.LogError(err, "failed to create transformed response for agent")
+			c.AbortWithStatus(http.StatusBadGateway)
+			return
+		}
+		for key, val := range variation.Server.Headers {
+			c.Writer.Header().Set(key, val)
+		}
+		c.Writer.Header().Set("Content-Length", strconv.Itoa(len(agentResponse)))
+		c.Data(resp.StatusCode, c.Writer.Header().Get("Content-Type"), agentResponse)
 	}
 }
 
