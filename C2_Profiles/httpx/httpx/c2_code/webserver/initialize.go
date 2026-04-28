@@ -389,15 +389,6 @@ func proxyRequest(configInstance instanceConfig, proxy *httputil.ReverseProxy, v
 		req.Host = fmt.Sprintf("%s:%d", mythicConfig.MythicConfig.MythicServerHost, mythicConfig.MythicConfig.MythicServerPort)
 		req.URL.Path = "/agent_message"
 		req.Header.Add("mythic", "httpx")
-		agentMessage, err := getMessageFromClient(req, variation)
-		if err != nil {
-			logging.LogError(err, "Failed to get message from client to proxy to mythic")
-			return
-		}
-		req.Body = io.NopCloser(bytes.NewBuffer(agentMessage))
-		req.ContentLength = int64(len(agentMessage))
-		req.Header.Set("Content-Length", strconv.Itoa(len(agentMessage)))
-		req.TransferEncoding = nil
 	}
 	createResponseFunc := func(resp *http.Response) error {
 		for key, val := range variation.Server.Headers {
@@ -422,6 +413,16 @@ func proxyRequest(configInstance instanceConfig, proxy *httputil.ReverseProxy, v
 	proxy.ModifyResponse = createResponseFunc
 	proxy.Director = director
 	return func(c *gin.Context) {
+		agentMessage, err := getMessageFromClient(c.Request, variation)
+		if err != nil {
+			logging.LogError(err, "Failed to get message from client to proxy to mythic")
+			c.AbortWithStatus(http.StatusBadGateway)
+			return
+		}
+		c.Request.Body = io.NopCloser(bytes.NewReader(agentMessage))
+		c.Request.ContentLength = int64(len(agentMessage))
+		c.Request.Header.Set("Content-Length", strconv.Itoa(len(agentMessage)))
+		c.Request.TransferEncoding = nil
 		proxy.ServeHTTP(c.Writer, c.Request)
 	}
 }
