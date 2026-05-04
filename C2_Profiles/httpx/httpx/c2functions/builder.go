@@ -104,6 +104,48 @@ func writeAgentJsonConfig(cfg map[string]AgentVariations) error {
 	return os.WriteFile(filepath.Join(".", "httpx", "c2_code", "agent_configs.json"), jsonBytes, 644)
 }
 
+type rawC2ConfigPreset struct {
+	Filename string `json:"filename"`
+	Label    string `json:"label"`
+	Content  string `json:"content"`
+}
+
+func listRawC2ConfigPresets() ([]rawC2ConfigPreset, error) {
+	dir := filepath.Join(".", "httpx", "c2_code", "presets")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []rawC2ConfigPreset{}, nil
+		}
+		return nil, err
+	}
+	presets := make([]rawC2ConfigPreset, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		ext := strings.ToLower(filepath.Ext(entry.Name()))
+		if ext != ".json" && ext != ".toml" {
+			continue
+		}
+		content, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			logging.LogError(err, "Failed to read preset", "file", entry.Name())
+			continue
+		}
+		label := strings.TrimSuffix(entry.Name(), ext)
+		if variation, err := parseInlineAgentVariation(string(content)); err == nil && variation.Name != "" && !strings.HasPrefix(variation.Name, "inline_") {
+			label = variation.Name
+		}
+		presets = append(presets, rawC2ConfigPreset{
+			Filename: entry.Name(),
+			Label:    label,
+			Content:  string(content),
+		})
+	}
+	return presets, nil
+}
+
 func defaultAgentVariation(name string) AgentVariations {
 	return AgentVariations{
 		Name: name,
@@ -671,6 +713,20 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 		response.RestartInternalServer = true
 		return response
 	},
+	CustomRPCFunctions: map[string]func(message c2structs.C2RPCOtherServiceRPCMessage) c2structs.C2RPCOtherServiceRPCMessageResponse{
+		"list_raw_c2_config_presets": func(message c2structs.C2RPCOtherServiceRPCMessage) c2structs.C2RPCOtherServiceRPCMessageResponse {
+			response := c2structs.C2RPCOtherServiceRPCMessageResponse{Result: map[string]interface{}{}}
+			presets, err := listRawC2ConfigPresets()
+			if err != nil {
+				response.Success = false
+				response.Error = err.Error()
+				return response
+			}
+			response.Success = true
+			response.Result["presets"] = presets
+			return response
+		},
+	},
 }
 var httpxc2parameters = []c2structs.C2Parameter{
 	{
@@ -807,7 +863,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		GroupName:     "Advanced",
 		Description:   "Inline agent configuration in JSON or TOML. Leave empty to use the default no-transform profile.",
 		DefaultValue:  "",
-		FormatString:  "ui:config_editor:json_toml",
+		FormatString:  "ui:config_editor:json_toml:presets_fn=list_raw_c2_config_presets",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		FormSchema:    rawC2ConfigSchema(),
 		Required:      false,
