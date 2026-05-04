@@ -14,7 +14,6 @@ import (
 	"github.com/pelletier/go-toml"
 	"golang.org/x/exp/slices"
 	"io"
-	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -215,80 +214,6 @@ func rawC2ConfigSchema() map[string]interface{} {
 			buildRequestBlock("post", "POST Request", []string{"POST", "PUT", "PATCH"}),
 		},
 	}
-}
-
-func randomRawC2Config() (string, error) {
-	verbs := []string{"POST", "PUT", "PATCH"}
-	postPaths := []string{"/api/v1/events", "/submit", "/upload", "/graphql", "/sync", "/beacon", "/telemetry"}
-	getPaths := []string{"/api/v1/status", "/health", "/feed", "/index.html", "/favicon.ico", "/manifest.json"}
-	locations := []string{"body", "cookie", "query", "header"}
-	paramNames := []string{"sid", "session", "token", "data", "payload", "q", "ref"}
-	headerNames := []string{"X-Session-ID", "X-Request-ID", "Authorization", "X-Trace"}
-	userAgents := []string{
-		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-		"Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
-		"curl/8.5.0",
-		"Go-http-client/1.1",
-	}
-	transformActions := []string{"base64", "base64url", "prepend", "append"}
-
-	pickMessage := func(kind string) AgentVariationConfigMessage {
-		loc := locations[rand.IntN(len(locations))]
-		if kind == "get" && loc == "body" {
-			loc = "query"
-		}
-		msg := AgentVariationConfigMessage{Location: loc}
-		if loc != "body" {
-			switch loc {
-			case "cookie", "query":
-				msg.Name = paramNames[rand.IntN(len(paramNames))]
-			case "header":
-				msg.Name = headerNames[rand.IntN(len(headerNames))]
-			}
-		}
-		return msg
-	}
-	pickTransforms := func() []AgentVariationConfigMessageTransform {
-		n := rand.IntN(3) // 0, 1, or 2 transforms
-		out := make([]AgentVariationConfigMessageTransform, 0, n)
-		for i := 0; i < n; i++ {
-			action := transformActions[rand.IntN(len(transformActions))]
-			t := AgentVariationConfigMessageTransform{Action: action}
-			if action == "prepend" || action == "append" {
-				t.Value = fmt.Sprintf("x%d", rand.IntN(10000))
-			}
-			out = append(out, t)
-		}
-		return out
-	}
-
-	variation := AgentVariations{
-		Name: fmt.Sprintf("random_%d", rand.IntN(1_000_000)),
-		Get: AgentVariationConfig{
-			Verb: "GET",
-			URIs: []string{getPaths[rand.IntN(len(getPaths))]},
-			Client: AgentVariationConfigClient{
-				Headers:    map[string]string{"User-Agent": userAgents[rand.IntN(len(userAgents))]},
-				Message:    pickMessage("get"),
-				Transforms: pickTransforms(),
-			},
-		},
-		Post: AgentVariationConfig{
-			Verb: verbs[rand.IntN(len(verbs))],
-			URIs: []string{postPaths[rand.IntN(len(postPaths))]},
-			Client: AgentVariationConfigClient{
-				Headers:    map[string]string{"User-Agent": userAgents[rand.IntN(len(userAgents))]},
-				Message:    pickMessage("post"),
-				Transforms: pickTransforms(),
-			},
-		},
-	}
-
-	jsonBytes, err := json.MarshalIndent(variation, "", "  ")
-	if err != nil {
-		return "", err
-	}
-	return string(jsonBytes), nil
 }
 
 func parseAgentVariation(content []byte, fallbackName string) (AgentVariations, error) {
@@ -746,20 +671,6 @@ RewriteCond %%{HTTP_USER_AGENT} "%s"`
 		response.RestartInternalServer = true
 		return response
 	},
-	CustomRPCFunctions: map[string]func(message c2structs.C2RPCOtherServiceRPCMessage) c2structs.C2RPCOtherServiceRPCMessageResponse{
-		"generate_random_raw_c2_config": func(message c2structs.C2RPCOtherServiceRPCMessage) c2structs.C2RPCOtherServiceRPCMessageResponse {
-			response := c2structs.C2RPCOtherServiceRPCMessageResponse{Result: map[string]interface{}{}}
-			generated, err := randomRawC2Config()
-			if err != nil {
-				response.Success = false
-				response.Error = err.Error()
-				return response
-			}
-			response.Success = true
-			response.Result["value"] = generated
-			return response
-		},
-	},
 }
 var httpxc2parameters = []c2structs.C2Parameter{
 	{
@@ -896,7 +807,7 @@ var httpxc2parameters = []c2structs.C2Parameter{
 		GroupName:     "Advanced",
 		Description:   "Inline agent configuration in JSON or TOML. Leave empty to use the default no-transform profile.",
 		DefaultValue:  "",
-		FormatString:  "ui:config_editor:json_toml:random_fn=generate_random_raw_c2_config",
+		FormatString:  "ui:config_editor:json_toml",
 		ParameterType: c2structs.C2_PARAMETER_TYPE_STRING,
 		FormSchema:    rawC2ConfigSchema(),
 		Required:      false,
